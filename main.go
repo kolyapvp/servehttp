@@ -12,12 +12,6 @@ var task string
 
 // POST handler для обновления task
 func postTaskHandler(w http.ResponseWriter, r *http.Request) {
-	// Проверяем, что метод запроса POST
-	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
 	// Декодируем JSON из тела запроса
 	var requestBody struct {
 		Task string `json:"task"`
@@ -38,12 +32,6 @@ func postTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 // GET handler для возвращения приветствия с task
 func getTaskHandler(w http.ResponseWriter, r *http.Request) {
-	// Проверяем, что метод запроса GET
-	if r.Method != http.MethodGet {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
 	// Читаем текущую task
 	currentTask := task
 
