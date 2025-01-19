@@ -2,49 +2,62 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gorilla/mux"
+	"log"
 	"net/http"
+	"pet1/db"
 )
 
-// Глобальная переменная для хранения task
-var task string
+// Task представляет структуру задачи
+type Task struct {
+	ID     uint   `json:"id"`
+	Task   string `json:"task"`
+	IsDone bool   `json:"is_done"`
+}
 
-// POST handler для обновления task
+// POST handler для добавления задачи
 func postTaskHandler(w http.ResponseWriter, r *http.Request) {
-	// Декодируем JSON из тела запроса
-	var requestBody struct {
-		Task string `json:"task"`
-	}
+	var requestBody Task
 
+	// Декодируем JSON из тела запроса
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
 
-	// Обновляем глобальную переменную task
-	task = requestBody.Task
+	// Сохраняем задачу в базу данных
+	if err := db.DB.Create(&requestBody).Error; err != nil {
+		http.Error(w, "Failed to save task", http.StatusInternalServerError)
+		return
+	}
 
-	// Возвращаем успешный ответ
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintln(w, "Task updated successfully")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(requestBody)
 }
 
-// GET handler для возвращения приветствия с task
+// GET handler для получения всех задач
 func getTaskHandler(w http.ResponseWriter, r *http.Request) {
-	// Читаем текущую task
-	currentTask := task
+	var tasks []Task
 
-	// Возвращаем приветствие
-	fmt.Fprintf(w, "hello, %s\n", currentTask)
+	// Извлекаем все задачи из базы данных
+	if err := db.DB.Find(&tasks).Error; err != nil {
+		http.Error(w, "Failed to retrieve tasks", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(tasks)
 }
 
 func main() {
+	// Инициализация базы данных
+	db.InitDB()
 
-	router := mux.NewRouter()
-	// Регистрируем обработчики
-	router.HandleFunc("/get", getTaskHandler).Methods("GET")
-	router.HandleFunc("/post", postTaskHandler).Methods("POST")
+	// Создаем маршруты
+	r := mux.NewRouter()
+	r.HandleFunc("/tasks", postTaskHandler).Methods("POST")
+	r.HandleFunc("/tasks", getTaskHandler).Methods("GET")
 
-	http.ListenAndServe(":8080", router)
+	// Запускаем сервер
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
