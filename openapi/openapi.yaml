@@ -5,12 +5,12 @@ info:
 paths:
   /tasks:
     get:
-      summary: Get all tasks
+      summary: Получить все задачи
       tags:
         - tasks
       responses:
         '200':
-          description: A list of tasks
+          description: Список задач
           content:
             application/json:
               schema:
@@ -18,11 +18,11 @@ paths:
                 items:
                   $ref: '#/components/schemas/Task'
     post:
-      summary: Create a new task
+      summary: Создать новую задачу
       tags:
         - tasks
       requestBody:
-        description: The task to create
+        description: Задача для создания
         required: true
         content:
           application/json:
@@ -30,11 +30,60 @@ paths:
               $ref: '#/components/schemas/Task'
       responses:
         '201':
-          description: The created task
+          description: Созданная задача
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Task'
+  /tasks/{id}:
+    patch:
+      summary: Обновить задачу по ID
+      tags:
+        - tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: uint
+      requestBody:
+        description: Поля для обновления задачи
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                task:
+                  type: string
+                is_done:
+                  type: boolean
+      responses:
+        '200':
+          description: Задача успешно обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Задача не найдена
+    delete:
+      summary: Удалить задачу по ID
+      tags:
+        - tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: uint
+      responses:
+        '204':
+          description: Задача успешно удалена
+        '404':
+          description: Задача не найдена
 
 components:
   schemas:

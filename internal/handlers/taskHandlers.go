@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
 	"pet1/internal/taskService"
@@ -12,6 +13,66 @@ import (
 
 type Handler struct {
 	Service *taskService.TaskService
+}
+
+// DeleteTasksId реализует удаление задачи по ID
+func (h *Handler) DeleteTasksId(ctx context.Context, request tasks.DeleteTasksIdRequestObject) (tasks.DeleteTasksIdResponseObject, error) {
+	// Извлекаем ID задачи из запроса
+	id := request.Id
+
+	// Вызываем сервис для удаления задачи
+	err := h.Service.DeleteTaskByID(id)
+	if err != nil {
+		if err.Error() == "task not found" || err.Error() == "no task was deleted" {
+			// Возвращаем 404 Not Found, если задача не найдена
+			return tasks.DeleteTasksId404Response{}, nil
+		}
+		// Возвращаем 500 Internal Server Error для других ошибок
+		return nil, fmt.Errorf("failed to delete task: %w", err)
+	}
+
+	// Возвращаем 204 No Content при успешном удалении
+	return tasks.DeleteTasksId204Response{}, nil
+}
+
+func (h *Handler) PatchTasksId(_ context.Context, request tasks.PatchTasksIdRequestObject) (tasks.PatchTasksIdResponseObject, error) {
+	// Извлекаем ID задачи из запроса
+	id := request.Id
+
+	// Извлекаем тело запроса, содержащее поля для обновления
+	body := request.Body
+
+	// Создаём объект задачи с обновлёнными полями
+	taskToUpdate := taskService.Task{}
+
+	if body.Task != nil {
+		taskToUpdate.Task = *body.Task
+	}
+
+	if body.IsDone != nil {
+		taskToUpdate.IsDone = *body.IsDone
+	}
+
+	// Вызываем сервис для обновления задачи
+	updatedTask, err := h.Service.UpdateTaskByID(id, taskToUpdate)
+	if err != nil {
+		if err.Error() == "task not found" {
+			// Возвращаем 404 Not Found, если задача не найдена
+			return tasks.PatchTasksId404Response{}, nil
+		}
+		// Возвращаем 500 Internal Server Error для других ошибок
+		return nil, fmt.Errorf("failed to update task: %w", err)
+	}
+
+	// Создаём объект ответа с обновлённой задачей
+	responseTask := tasks.Task{
+		Id:     &updatedTask.ID,
+		Task:   &updatedTask.Task,
+		IsDone: &updatedTask.IsDone,
+	}
+
+	// Возвращаем 200 OK с обновлённой задачей
+	return tasks.PatchTasksId200JSONResponse(responseTask), nil
 }
 
 func (h *Handler) GetTasks(_ context.Context, _ tasks.GetTasksRequestObject) (tasks.GetTasksResponseObject, error) {
