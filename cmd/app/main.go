@@ -1,33 +1,36 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"log"
-	"net/http"
 	"pet1/internal/db"
 	"pet1/internal/handlers"
 	"pet1/internal/taskService"
+	"pet1/internal/web/tasks"
 )
 
 func main() {
-	// Инициализация базы данных
 	db.InitDB()
-	if err := db.DB.AutoMigrate(&taskService.Task{}); err != nil {
-		log.Fatal(err)
-	}
+	db.DB.AutoMigrate(&taskService.Task{})
 
 	repo := taskService.NewTaskRepository(db.DB)
 	service := taskService.NewService(repo)
 
 	handler := handlers.NewHandler(service)
-	// Маршруты
-	r := mux.NewRouter()
-	r.HandleFunc("/tasks", handler.PostTaskHandler).Methods("POST")
-	r.HandleFunc("/tasks", handler.GetTasksHandler).Methods("GET")
-	r.HandleFunc("/tasks/{id}", handler.UpdateTaskHandler).Methods("PATCH")
-	r.HandleFunc("/tasks/{id}", handler.DeleteTaskHandler).Methods("DELETE")
 
-	// Запускаем сервер
-	log.Println("Server is running on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	// Инициализируем echo
+	e := echo.New()
+
+	// используем Logger и Recover
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
+	// Прикол для работы в echo. Передаем и регистрируем хендлер в echo
+	strictHandler := tasks.NewStrictHandler(handler, nil) // тут будет ошибка
+	tasks.RegisterHandlers(e, strictHandler)
+
+	if err := e.Start(":8080"); err != nil {
+		log.Fatalf("failed to start with err: %v", err)
+	}
 }
