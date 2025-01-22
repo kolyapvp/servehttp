@@ -84,6 +84,87 @@ paths:
           description: Задача успешно удалена
         '404':
           description: Задача не найдена
+  /users:
+    get:
+      summary: Получить всех пользователей
+      tags:
+        - users
+      responses:
+        '200':
+          description: Список пользователей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+    post:
+      summary: Создать нового пользователя
+      tags:
+        - users
+      requestBody:
+        description: Пользователь для создания
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: Созданный пользователь
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /users/{id}:
+    patch:
+      summary: Обновить пользователя по ID
+      tags:
+        - users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: uint
+      requestBody:
+        description: Поля для обновления пользователя
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Пользователь успешно обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Пользователь не найден
+    delete:
+      summary: Удалить пользователя по ID
+      tags:
+        - users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: uint
+      responses:
+        '204':
+          description: Пользователь успешно удалён
+        '404':
+          description: Пользователь не найден
 
 components:
   schemas:
@@ -92,8 +173,32 @@ components:
       properties:
         id:
           type: integer
-          format: uint # так как в БД айди это только положительные числа.
+          format: uint
         task:
           type: string
         is_done:
           type: boolean
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: uint
+        email:
+          type: string
+        password:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
