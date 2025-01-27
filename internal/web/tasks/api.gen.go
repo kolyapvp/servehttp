@@ -22,7 +22,7 @@ type Task struct {
 	IsDone    bool       `json:"is_done"`
 	Task      string     `json:"task"`
 	UpdatedAt *time.Time `json:"updated_at,omitempty"`
-	UserId    uint       `json:"user_id"`
+	UserId    uint       `json:"user_id,omitempty"`
 }
 
 // PostTasksJSONBody defines parameters for PostTasks.
