@@ -141,7 +141,7 @@ func (h *TaskHandler) GetUsersTasks(_ context.Context, request tasks.GetUsersIdT
 			Id:     &tsk.ID,
 			Task:   tsk.Task,
 			IsDone: tsk.IsDone,
-			UserId: 0,
+			UserId: tsk.UserID,
 		}
 		response = append(response, task)
 	}

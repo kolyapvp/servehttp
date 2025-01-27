@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/oapi-codegen/runtime"
@@ -17,11 +16,9 @@ import (
 
 // User defines model for User.
 type User struct {
-	CreatedAt *time.Time `json:"created_at,omitempty"`
-	Email     *string    `json:"email,omitempty"`
-	Id        *uint      `json:"id,omitempty"`
-	Password  *string    `json:"password,omitempty"`
-	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+	Email    *string `json:"email,omitempty"`
+	Id       *uint   `json:"id,omitempty"`
+	Password *string `json:"password,omitempty"`
 }
 
 // PatchUsersIdJSONBody defines parameters for PatchUsersId.
