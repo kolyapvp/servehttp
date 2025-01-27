@@ -191,13 +191,13 @@ paths:
             format: uint
       responses:
         '200':
-          description: Список задач пользователя
+          description: Список задач пользователя без user_id
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Task'
+                  $ref: '#/components/schemas/TaskWithoutUserID'
         '404':
           description: Пользователь не найден
 
@@ -226,6 +226,27 @@ components:
         updated_at:
           type: string
           format: date-time
+
+    TaskWithoutUserID:
+      type: object
+      required:
+        - task
+        - is_done
+      properties:
+        id:
+          type: integer
+          format: uint
+        task:
+          type: string
+        is_done:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
     User:
       type: object
       properties:
@@ -236,12 +257,7 @@ components:
           type: string
         password:
           type: string
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
+
     Error:
       type: object
       properties:

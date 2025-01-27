@@ -25,6 +25,15 @@ type Task struct {
 	UserId    uint       `json:"user_id"`
 }
 
+// TaskWithoutUserID defines model for TaskWithoutUserID.
+type TaskWithoutUserID struct {
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+	Id        *uint      `json:"id,omitempty"`
+	IsDone    bool       `json:"is_done"`
+	Task      string     `json:"task"`
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+}
+
 // PostTasksJSONBody defines parameters for PostTasks.
 type PostTasksJSONBody struct {
 	IsDone bool   `json:"is_done"`
@@ -261,7 +270,7 @@ type GetUsersIdTasksResponseObject interface {
 	VisitGetUsersIdTasksResponse(w http.ResponseWriter) error
 }
 
-type GetUsersIdTasks200JSONResponse []Task
+type GetUsersIdTasks200JSONResponse []TaskWithoutUserID
 
 func (response GetUsersIdTasks200JSONResponse) VisitGetUsersIdTasksResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
