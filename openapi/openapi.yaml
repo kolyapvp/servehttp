@@ -27,7 +27,19 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Task'
+              type: object
+              required:
+                - task
+                - is_done
+                - user_id
+              properties:
+                task:
+                  type: string
+                is_done:
+                  type: boolean
+                user_id:
+                  type: integer
+                  format: uint
       responses:
         '201':
           description: Созданная задача
@@ -165,11 +177,38 @@ paths:
           description: Пользователь успешно удалён
         '404':
           description: Пользователь не найден
+  /users/{id}/tasks:
+    get:
+      summary: Получить все задачи пользователя
+      tags:
+        - tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: uint
+      responses:
+        '200':
+          description: Список задач пользователя
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '404':
+          description: Пользователь не найден
 
 components:
   schemas:
     Task:
       type: object
+      required:
+        - task
+        - is_done
+        - user_id
       properties:
         id:
           type: integer
@@ -178,6 +217,15 @@ components:
           type: string
         is_done:
           type: boolean
+        user_id:
+          type: integer
+          format: uint
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
     User:
       type: object
       properties:

@@ -1,4 +1,4 @@
-package userService
+package postgres
 
 import (
 	"pet1/internal/taskService"

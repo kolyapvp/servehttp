@@ -7,19 +7,20 @@ import (
 	"pet1/internal/web/tasks"
 )
 
-// Handler нужна для создания структуры  на этапе инициализации приложения
-type Handler struct {
+// TaskHandler переименовываем для ясности
+type TaskHandler struct {
 	Service *taskService.TaskService
 }
 
-func NewHandler(service *taskService.TaskService) *Handler {
-	return &Handler{
+// NewTaskHandler переименовываем конструктор
+func NewTaskHandler(service *taskService.TaskService) *TaskHandler {
+	return &TaskHandler{
 		Service: service,
 	}
 }
 
 // DeleteTasksId реализует удаление задачи по ID
-func (h *Handler) DeleteTasksId(_ context.Context, request tasks.DeleteTasksIdRequestObject) (tasks.DeleteTasksIdResponseObject, error) {
+func (h *TaskHandler) DeleteTasksId(ctx context.Context, request tasks.DeleteTasksIdRequestObject) (tasks.DeleteTasksIdResponseObject, error) {
 	// Извлекаем ID задачи из запроса
 	id := request.Id
 
@@ -38,7 +39,7 @@ func (h *Handler) DeleteTasksId(_ context.Context, request tasks.DeleteTasksIdRe
 	return tasks.DeleteTasksId204Response{}, nil
 }
 
-func (h *Handler) PatchTasksId(_ context.Context, request tasks.PatchTasksIdRequestObject) (tasks.PatchTasksIdResponseObject, error) {
+func (h *TaskHandler) PatchTasksId(_ context.Context, request tasks.PatchTasksIdRequestObject) (tasks.PatchTasksIdResponseObject, error) {
 	// Извлекаем ID задачи из запроса
 	id := request.Id
 
@@ -70,15 +71,16 @@ func (h *Handler) PatchTasksId(_ context.Context, request tasks.PatchTasksIdRequ
 	// Создаём объект ответа с обновлённой задачей
 	responseTask := tasks.Task{
 		Id:     &updatedTask.ID,
-		Task:   &updatedTask.Task,
-		IsDone: &updatedTask.IsDone,
+		Task:   updatedTask.Task,
+		IsDone: updatedTask.IsDone,
+		UserId: updatedTask.UserID,
 	}
 
 	// Возвращаем 200 OK с обновлённой задачей
 	return tasks.PatchTasksId200JSONResponse(responseTask), nil
 }
 
-func (h *Handler) GetTasks(_ context.Context, _ tasks.GetTasksRequestObject) (tasks.GetTasksResponseObject, error) {
+func (h *TaskHandler) GetTasks(_ context.Context, _ tasks.GetTasksRequestObject) (tasks.GetTasksResponseObject, error) {
 	// Получение всех задач из сервиса
 	allTasks, err := h.Service.GetAllTasks()
 	if err != nil {
@@ -93,8 +95,9 @@ func (h *Handler) GetTasks(_ context.Context, _ tasks.GetTasksRequestObject) (ta
 	for _, tsk := range allTasks {
 		task := tasks.Task{
 			Id:     &tsk.ID,
-			Task:   &tsk.Task,
-			IsDone: &tsk.IsDone,
+			Task:   tsk.Task,
+			IsDone: tsk.IsDone,
+			UserId: tsk.UserID,
 		}
 		response = append(response, task)
 	}
@@ -103,25 +106,49 @@ func (h *Handler) GetTasks(_ context.Context, _ tasks.GetTasksRequestObject) (ta
 	return response, nil
 }
 
-func (h *Handler) PostTasks(_ context.Context, request tasks.PostTasksRequestObject) (tasks.PostTasksResponseObject, error) {
-	// Распаковываем тело запроса напрямую, без декодера!
+func (h *TaskHandler) PostTasks(_ context.Context, request tasks.PostTasksRequestObject) (tasks.PostTasksResponseObject, error) {
 	taskRequest := request.Body
-	// Обращаемся к сервису и создаем задачу
 	taskToCreate := taskService.Task{
-		Task:   *taskRequest.Task,
-		IsDone: *taskRequest.IsDone,
+		Task:   taskRequest.Task,
+		IsDone: taskRequest.IsDone,
+		UserID: taskRequest.UserId,
 	}
 	createdTask, err := h.Service.CreateTask(taskToCreate)
 
 	if err != nil {
 		return nil, err
 	}
-	// создаем структуру респонс
+
 	response := tasks.PostTasks201JSONResponse{
 		Id:     &createdTask.ID,
-		Task:   &createdTask.Task,
-		IsDone: &createdTask.IsDone,
+		Task:   createdTask.Task,
+		IsDone: createdTask.IsDone,
+		UserId: createdTask.UserID,
 	}
-	// Просто возвращаем респонс!
 	return response, nil
+}
+
+// GetUsersTasks реализует получение задач пользователя
+func (h *TaskHandler) GetUsersTasks(_ context.Context, request tasks.GetUsersIdTasksRequestObject) (tasks.GetUsersIdTasksResponseObject, error) {
+	userTasks, err := h.Service.GetTasksByUserID(request.Id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user tasks: %w", err)
+	}
+
+	response := tasks.GetUsersIdTasks200JSONResponse{}
+	for _, tsk := range userTasks {
+		task := tasks.Task{
+			Id:     &tsk.ID,
+			Task:   tsk.Task,
+			IsDone: tsk.IsDone,
+			UserId: tsk.UserID,
+		}
+		response = append(response, task)
+	}
+
+	return response, nil
+}
+
+func (h *TaskHandler) GetUsersIdTasks(ctx context.Context, request tasks.GetUsersIdTasksRequestObject) (tasks.GetUsersIdTasksResponseObject, error) {
+	return h.GetUsersTasks(ctx, request)
 }
