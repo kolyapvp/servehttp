@@ -1,25 +1,31 @@
 package main
 
 import (
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"log"
 	"pet1/internal/db"
 	"pet1/internal/handlers"
 	"pet1/internal/taskService"
+	"pet1/internal/userService"
 	"pet1/internal/web/tasks"
+	"pet1/internal/web/users"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
+	// Инициализация БД
 	db.InitDB()
-	if err := db.DB.AutoMigrate(&taskService.Task{}); err != nil {
-		log.Fatal(err)
-	}
 
-	repo := taskService.NewTaskRepository(db.DB)
-	service := taskService.NewService(repo)
+	// Инициализация сервисов задач
+	tasksRepo := taskService.NewTaskRepository(db.DB)
+	tasksService := taskService.NewService(tasksRepo)
+	tasksHandler := handlers.NewTaskHandler(tasksService)
 
-	handler := handlers.NewHandler(service)
+	// Инициализация сервисов пользователей
+	usersRepo := userService.NewUserRepository(db.DB)
+	usersService := userService.NewService(usersRepo)
+	usersHandler := handlers.NewUserHandler(usersService)
 
 	// Инициализируем echo
 	e := echo.New()
@@ -28,9 +34,13 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	// Прикол для работы в echo. Передаем и регистрируем хендлер в echo
-	strictHandler := tasks.NewStrictHandler(handler, nil) // тут будет ошибка
-	tasks.RegisterHandlers(e, strictHandler)
+	// Регистрация обработчиков задач
+	tasksStrictHandler := tasks.NewStrictHandler(tasksHandler, nil)
+	tasks.RegisterHandlers(e, tasksStrictHandler)
+
+	// Регистрация обработчиков пользователей
+	usersStrictHandler := users.NewStrictHandler(usersHandler, nil)
+	users.RegisterHandlers(e, usersStrictHandler)
 
 	if err := e.Start(":8080"); err != nil {
 		log.Fatalf("failed to start with err: %v", err)

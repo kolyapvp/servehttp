@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  app-serve-http:
+    build:
+      # Нужно обязательно указать контекст и путь к Dockerfile.dev
+      context: .
+      dockerfile: Dockerfile.dev
+    command: tail -f /dev/null    # Важно для поддержания контейнера активным
+    # volumes - монтирование директории
+    volumes:
+      # Монтирование локальной директории в контейнер
+      # Любое изменение в директории будет отражаться в контейнере в под каталоге /app
+      - .:/app
+    # Для запуска сервиса нужно запустить базу данных.
+    # Если не будет запущен докер с именем db, то сервис app не запустится
+    depends_on:
+      - db-serve-http
+    environment:
+      - DB_HOST=db-serve-http
+      - DB_USER=postgres
+      - DB_PASSWORD=yourpassword
+      - DB_NAME=postgres
+      - DB_PORT=5432
+    ports:
+      - "8080:8080"  # Пробрасываем порт 8080
+
+  db-serve-http:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=yourpassword
+      - POSTGRES_DB=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

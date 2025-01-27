@@ -2,6 +2,7 @@ package taskService
 
 import (
 	"errors"
+
 	"gorm.io/gorm"
 )
 
@@ -16,6 +17,7 @@ type TaskRepository interface {
 	UpdateTaskByID(id uint, task Task) (Task, error)
 	// DeleteTaskByID - Передаем id для удаления, возвращаем только ошибку
 	DeleteTaskByID(id uint) error
+	GetTasksByUserID(userID uint) ([]Task, error)
 }
 
 type taskRepository struct {
@@ -24,13 +26,6 @@ type taskRepository struct {
 
 func NewTaskRepository(db *gorm.DB) *taskRepository {
 	return &taskRepository{db: db}
-}
-
-// Task представляет структуру задачи
-type Task struct {
-	ID     uint   `json:"id"`
-	Task   string `json:"task"`
-	IsDone bool   `json:"is_done"`
 }
 
 // (r *taskRepository) привязывает данную функцию к нашему репозиторию
@@ -105,4 +100,14 @@ func (r *taskRepository) DeleteTaskByID(id uint) error {
 
 	// Возвращаем nil, указывая на отсутствие ошибки
 	return nil
+}
+
+// GetTasksByUserID получает все задачи пользователя по его ID
+func (r *taskRepository) GetTasksByUserID(userID uint) ([]Task, error) {
+	var tasks []Task
+	result := r.db.Where("user_id = ?", userID).Find(&tasks)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return tasks, nil
 }
